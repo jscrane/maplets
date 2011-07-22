@@ -1,0 +1,9 @@
+MapApp
+------
+* remember last position
+* parametrise with minimum zoom level (don't usually need z=0)
+
+MIDlet
+------
+* new web-page
+* make cache configurable from property

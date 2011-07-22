@@ -1,0 +1,40 @@
+README for Maplets, 30 May 2006
+
+Caveats
+-------
+* You should probably be a programmer familiar with MIDP to build and
+  use this program
+* The MIDlet is parametrised using its JAD file which is constructed
+  from etc/maplets.properties
+* If the target device does not support JSR-75, FileMapCache can't be
+  used, use RmsMapCache instead --- edit WhereMIDlet.java
+* The RMS can grow indefinitely; this needs to be fixed, see RmsMapCache
+* The basic coordinate mapper, org.syzygy.gps.Googler no longer
+  works; version 2 is now the default, org.syzygy.gps.Googler2
+
+Prerequisites
+-------------
+* A GPS receiver which reports location using NMEA sentences
+* A MIDP device which is capable of connecting to the GPS receiver
+  via the Generic Connection Framework (javax.microedition.io.*)
+  and which can connect to the Internet with HTTP
+* Ant (http://ant.apache.org), javac, Sun's wireless toolkit,
+  (http://java.sun.com/products/sjwtoolkit/) and antenna
+  (http://antenna.sourceforge.net) to build the MIDlet
+
+Testing
+-------
+* This MIDlet has been tested under me4se 
+  (http://http://kobjects.sourceforge.net/me4se/) with Impronto
+  (http://www.rococosoft.com) on Linux with the BlueZ stack.
+* It has also been run on a Sony-Ericsson k750i
+* If you get it working on another device, please let me know.
+
+License
+-------
+* All code is released under the GNU General Public license, see
+  http://www.gnu.org/licenses/gpl.html for details
+
+Author
+------
+* Stephen Crane, jscrane@gmail.com

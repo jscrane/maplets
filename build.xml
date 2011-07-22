@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+
+<project name="maplets" default="package.midlets">
+
+    <property environment="env"/>
+    <property name="packages" value="${env.PACKAGES}"/>
+    <fail message="Please set PACKAGES" unless="packages"/>
+
+    <property file="etc/maplets.properties"/>
+    <property name="wtk.home" value="${packages}/wtk-${os.name}/2.5.2"/>
+    <property name="wtk.bluetooth.enabled" value="true"/>
+    <property name="wtk.cldc.version" value="1.1"/>
+    <property name="wtk.midp.version" value="2.0"/>
+    <property name="wtk.mmapi.enabled" value="true"/>
+    <property name="wtk.optionalpda.enabled" value="true"/>
+    <property name="lwuit.home" value="${packages}/LWUIT_1_4"/>
+
+    <property name="build" value="build"/>
+    <property name="build.common" value="build/common"/>
+    <property name="build.midp" value="build/midp"/>
+    <property name="build.tests" value="build/tests"/>
+    <property name="build.exploded" value="build/exploded"/>
+    <property name="src" value="src"/>
+    <property name="tests" value="test"/>
+
+    <target name="init">
+        <mkdir dir="${build}"/>
+        <mkdir dir="${build.common}"/>
+        <mkdir dir="${build.midp}"/>
+        <mkdir dir="${build.tests}"/>
+        <mkdir dir="${build.exploded}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.midp}"/>
+        <delete dir="${build}"/>
+        <delete dir="lib"/>
+    </target>
+
+    <path id="common.compile.path">
+        <pathelement path="${wtk.home}/lib/cldcapi11.jar"/>
+    </path>
+
+    <target name="compile.common" depends="init">
+        <javac destdir="${build.common}" debug="on" deprecation="on" target="1.1" source="1.2">
+            <classpath>
+                <path refid="common.compile.path"/>
+            </classpath>
+            <src path="${src}"/>
+            <include name="org/syzygy/gps/*.java"/>
+            <include name="org/syzygy/gps/mappers/*.java"/>
+        </javac>
+    </target>
+
+    <taskdef resource="antenna.properties" classpath="${packages}/antenna/0.9.14/dist/antenna-bin.jar"/>
+
+    <macrodef name="explode">
+        <attribute name="jar"/>
+        <attribute name="dir"/>
+        <sequential>
+            <exec executable="jar" dir="@{dir}">
+                <arg value="xf"/>
+                <arg value="@{jar}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <target name="compile.midlets" depends="compile.common">
+        <explode jar="${lwuit.home}/lib/LWUIT.jar" dir="${build.exploded}"/>
+        <explode jar="${packages}/kxml2/2.3.0/kxml-min.jar" dir="${build.exploded}"/>
+
+        <wtkbuild destdir="${build.midp}" deprecation="on" cldc="false" source="1.2">
+            <classpath>
+                <pathelement path="${build.common}"/>
+                <pathelement path="${build.exploded}"/>
+            </classpath>
+            <src path="${src}"/>
+            <include name="org/syzygy/gps/midp/*.java"/>
+            <include name="org/syzygy/util/*.java"/>
+            <include name="org/syzygy/util/midp/*.java"/>
+        </wtkbuild>
+    </target>
+
+    <target name="compile.resources" depends="init">
+        <taskdef name="build" classpath="${lwuit.home}/util/ResourceEditor.jar"
+                 classname="com.sun.lwuit.tools.resourcebuilder.LWUITTask"/>
+        <build dest="${build.midp}/resources.res">
+            <font createBitmap="false" name="proportionalSmall" system="FACE_PROPORTIONAL ; STYLE_PLAIN; SIZE_SMALL"/>
+            <font createBitmap="false" name="boldMonospace" system="FACE_MONOSPACE; STYLE_BOLD ; SIZE_MEDIUM"/>
+            <image file="etc/lwuit/bar.png" indexed="true"/>
+            <image file="etc/lwuit/javaorange.png" indexed="true"/>
+            <image file="etc/lwuit/business_bg.jpg" indexed="true"/>
+            <theme file="etc/lwuit/business.conf" name="business"/>
+        </build>
+    </target>
+
+    <target name="package.midlets" depends="compile.midlets,compile.resources">
+        <wtkjad jadfile="${build}/${gps.midlet.title}.jad"
+                name="${gps.midlet.title}"
+                vendor="The Syzygy Organisation"
+                version="1.0">
+            <midlet name="Setup"
+                    class="org.syzygy.gps.midp.SetupMIDlet"/>
+            <midlet name="Maplet"
+                    class="org.syzygy.gps.midp.MappingMIDlet"/>
+            <midlet name="Route"
+                    class="org.syzygy.gps.midp.RouteMIDlet"/>
+            <midlet name="Traces"
+                    class="org.syzygy.gps.midp.TraceReplayMIDlet"/>
+            <midlet name="Bookmarks"
+                    class="org.syzygy.gps.midp.BookmarkMIDlet"/>
+            <attribute name="MIDlet-Permissions" value="javax.microedition.io.Connector.file.read"/>
+            <attribute name="gps.receiver.url" value="${gps.receiver.url}"/>
+            <attribute name="gps.channels" value="${gps.channels}"/>
+            <attribute name="gps.midlet.title" value="${gps.midlet.title}"/>
+            <attribute name="gps.midlet.maps" value="${gps.midlet.maps}"/>
+            <attribute name="gps.coordinate.mapper" value="${gps.coordinate.mapper}"/>
+            <attribute name="gps.coordinate.mappers" value="${gps.coordinate.mappers}"/>
+            <attribute name="gps.midlet.traces" value="${gps.midlet.traces}"/>
+            <attribute name="gps.midlet.bookmarks" value="${gps.midlet.bookmarks}"/>
+            <attribute name="twiglet.user" value="${twiglet.user}"/>
+            <attribute name="twiglet.password" value="${twiglet.password}"/>
+            <attribute name="tweedledee.user" value="${tweedledee.user}"/>
+            <attribute name="tweedledee.password" value="${tweedledee.password}"/>
+        </wtkjad>
+        <wtkpackage jarfile="${build}/${gps.midlet.title}.jar"
+                    jadfile="${build}/${gps.midlet.title}.jad"
+                    preverify="true" obfuscate="false" cldc="true">
+            <fileset dir="${build.midp}" includes="**/*.class,*.res"/>
+            <fileset dir="${build.common}" includes="**/*.class"/>
+            <fileset dir="${build.exploded}">
+                <include name="**/*.class"/>
+                <exclude name="**/Transition3D.class"/>
+                <exclude name="**/SVGImage.class"/>
+                <exclude name="com/sun/lwuit/impl/midp/SVGImplementation$Handler.class"/>
+                <exclude name="com/sun/lwuit/impl/midp/SVGImplementation.class"/>
+                <exclude name="com/sun/lwuit/impl/midp/SVGImplementationFactory.class"/>
+            </fileset>
+            <preserve class="${gps.coordinate.mapper}"/>
+            <preserve class="${gps.location.source}"/>
+        </wtkpackage>
+    </target>
+
+    <path id="test.path">
+        <path refid="common.compile.path"/>
+        <pathelement path="${build.common}"/>
+        <pathelement path="${build.midp}"/>
+        <pathelement path="${build.exploded}"/>
+        <pathelement path="lib/junit-4.4.jar"/>
+    </path>
+
+    <target name="compile.tests" depends="compile.midlets">
+        <javac destdir="${build.tests}" srcdir="${tests}" debug="on">
+            <classpath>
+                <path refid="test.path"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="run.tests" depends="compile.tests">
+        <junit printsummary="yes">
+            <classpath>
+                <path refid="test.path"/>
+                <pathelement location="${build.tests}"/>
+            </classpath>
+            <formatter type="xml"/>
+            <batchtest todir="${build}">
+                <fileset dir="${build.tests}">
+                    <include name="**/Test*.class"/>
+                    <exclude name="**/Test*$*.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <junitreport todir="${build}">
+            <fileset dir="${build}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${build}"/>
+        </junitreport>
+    </target>
+
+    <target name="distrib.midlets" depends="package.midlets">
+        <tar tarfile="${build}/${gps.midlet.title}.tar">
+            <tarfileset dir="." prefix="${gps.midlet.title}">
+                <include name="build.xml"/>
+                <include name="README"/>
+                <include name="src/org/syzygy/gps/*.java"/>
+                <include name="src/org/syzygy/gps/midp/*.java"/>
+            </tarfileset>
+        </tar>
+        <gzip src="${build}/${gps.midlet.title}.tar"
+              destfile="${build}/${gps.midlet.title}.tar.gz"/>
+        <delete file="${build}/${gps.midlet.title}.tar"/>
+    </target>
+
+    <target name="run.midlet">
+        <exec executable="${wtk.home}/bin/emulator">
+            <arg value="-Xdescriptor:${build}/${gps.midlet.title}.jad"/>
+            <arg value="-Xdevice:DefaultGrayPhone"/>
+            <arg value="-cp"/>
+            <arg value="${build}/${gps.midlet.title}.jar"/>
+            <arg value="org.syzygy.gps.midp.TraceReplayMIDlet"/>
+        </exec>
+    </target>
+
+</project>

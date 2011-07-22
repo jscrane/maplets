@@ -1,0 +1,28 @@
+9
+
+dir
+179
+svn+ssh://fs/var/svn/repositories/btgps/trunk/data
+svn+ssh://fs/var/svn/repositories/btgps
+
+
+
+2005-08-20T19:50:57.665129Z
+51
+jsc
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+9acdb4b3-33fc-0310-ad1e-8494bbba6ef5
+
